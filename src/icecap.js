@@ -91,6 +91,7 @@ var Icecap = (function() {
 		
 		// Handle general event
 		obj.on('event', function(name, tokens) {
+			obj.emit(name, tokens);
 		});
 		
 	}

@@ -4,7 +4,7 @@ IceCap Client Library for Node.js
 Description
 -----------
 
-[IceCap](http://icecap.irssi2.org/) client library for [Node.js](http://www.nodejs.org). 
+This is a [IceCap](http://icecap.irssi2.org/) client library for [Node.js](http://www.nodejs.org). 
 
 Installation for Node.js
 ------------------------

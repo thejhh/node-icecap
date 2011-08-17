@@ -15,6 +15,10 @@ icecap.on('event', function(name, tokens) {
 	util.log('event: ' + sys.inspect(name) + ': ' + sys.inspect(tokens) );
 });
 
+icecap.on('msg', function(tokens) {
+	util.log( "<" + tokens.presence + "> " + tokens.msg );
+});
+
 // Execute command
 setTimeout(function() {
 	console.log("Sending msg!");
