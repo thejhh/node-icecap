@@ -6,10 +6,36 @@ var _logger = console,
     _lib = module.exports || {},
     EventEmitter = require('events').EventEmitter,
     util = require("util"),
-	foreach = require('snippets').foreach;
+	foreach = require('snippets').foreach,
+    split = require('snippets').split,
+    pass = require('snippets').pass;
 
 /* Icecap */
 var Icecap = (function() {
+	
+	/* Escape for IceCap protocol */
+	function _escape(tmp) {
+		return (""+tmp).replace(/\\/, "\\\\").replace(/;/, "\\.");
+	}
+	
+	/* Unescape for IceCap protocol */
+	function _unescape(tmp) {
+		return (""+tmp).replace(/\\\\/, "\\").replace(/\\\./, ";");
+	}
+	
+	/* Parse tokens */
+	function parse_tokens(tokens) {
+		var obj = {}, undefined;
+		foreach(tokens).do(function(token) {
+			if(token === "") return;
+			pass(split(/=/, token, 2)).on(function(key,value) {
+				var key = _unescape(key),
+				    value = (value === undefined) ? true : _unescape(value);
+				obj[key] = value;
+			});
+		});
+		return obj;
+	}
 	
 	/* Start icecapd */
 	function _start(obj, command, args) {
@@ -23,11 +49,11 @@ var Icecap = (function() {
 		// Handle input data
 		obj.icecapd.stdout.on("data", function(data) {
 			var income = buffer + data,
-			    lines = income.split('\n'),
+			    lines = income.split(/\r?\n/),
 			    last = lines.pop();
 			buffer = last;
 			foreach(lines).do(function(line) {
-				obj.emit("raw data", line);
+				obj.emit("data", line);
 			});
 		});
 		
@@ -43,9 +69,16 @@ var Icecap = (function() {
 		EventEmitter.call(obj);
 		_start(obj, command.name, command.args);
 		
-		// Parse raw data
-		obj.on('raw data', function(data) {
-			console.log('raw data:\n--\n' + data + '\n--\n');
+		// Handle raw data
+		obj.on('data', function(data) {
+			var tokens = data.split(";");
+			    a = _unescape(tokens.shift()),
+			    b = _unescape(tokens.shift());
+			if(a === "*") obj.emit('event', b, parse_tokens(tokens) );
+		});
+		
+		// Handle general event
+		obj.on('event', function(name, tokens) {
 		});
 		
 	}
