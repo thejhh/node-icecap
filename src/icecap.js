@@ -23,8 +23,17 @@ var Icecap = (function() {
 		return (""+tmp).replace(/\\\\/, "\\").replace(/\\\./, ";");
 	}
 	
+	/* Escape for IceCap protocol */
+	function _escape_tokens(tokens) {
+		var buffer = [];
+		foreach(tokens).do(function(value, key) {
+			buffer.push( (value === "") ? _escape(key) : _escape(key)+'='+_escape(value) );
+		});
+		return buffer.join(';');
+	}
+	
 	/* Parse tokens */
-	function parse_tokens(tokens) {
+	function _unescape_tokens(tokens) {
 		var obj = {}, undefined;
 		foreach(tokens).do(function(token) {
 			if(token === "") return;
@@ -44,10 +53,10 @@ var Icecap = (function() {
 		    buffer = '';
 		
 		// Start child process
-		obj.icecapd = require('child_process').spawn(command, args);
+		var icecapd = require('child_process').spawn(command, args);
 		
 		// Handle input data
-		obj.icecapd.stdout.on("data", function(data) {
+		icecapd.stdout.on("data", function(data) {
 			var income = buffer + data,
 			    lines = income.split(/\r?\n/),
 			    last = lines.pop();
@@ -57,7 +66,7 @@ var Icecap = (function() {
 			});
 		});
 		
-		return obj;
+		return icecapd;
 	}
 	
 	/* Constructor */
@@ -67,14 +76,17 @@ var Icecap = (function() {
 		    args = args || {},
 		    command = args.command || {};
 		EventEmitter.call(obj);
-		_start(obj, command.name, command.args);
+		
+		obj.next_tag = 1;
+		
+		obj.icecapd = _start(obj, command.name, command.args);
 		
 		// Handle raw data
 		obj.on('data', function(data) {
 			var tokens = data.split(";");
 			    a = _unescape(tokens.shift()),
 			    b = _unescape(tokens.shift());
-			if(a === "*") obj.emit('event', b, parse_tokens(tokens) );
+			if(a === "*") obj.emit('event', b, _unescape_tokens(tokens) );
 		});
 		
 		// Handle general event
@@ -83,12 +95,26 @@ var Icecap = (function() {
 		
 	}
 	
+	// 
 	util.inherits(Icecap, EventEmitter);
 	
 	/* Start connection */
-	Icecap.prototype.start = function(command, args) {
-		return _start(this, command, args);
-	}
+	Icecap.prototype.start = (function(command, args) {
+		var obj = this;
+		obj.icecapd = _start(obj, command, args);
+		return obj;
+	});
+	
+	/* Execute command */
+	Icecap.prototype.command = (function(name, params) {
+		var obj  = this,
+		    tag    = obj.next_tag++,
+		    name   = name,
+		    params = params || {},
+		    raw = _escape(tag) + ";" + _escape(name) + ";" + _escape_tokens(params);
+		util.log('Writing: ' + raw);
+		obj.icecapd.stdin.write( raw + "\n" );
+	});
 	
 	return Icecap;
 })();

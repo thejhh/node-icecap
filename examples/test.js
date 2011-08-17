@@ -15,4 +15,15 @@ icecap.on('event', function(name, tokens) {
 	util.log('event: ' + sys.inspect(name) + ': ' + sys.inspect(tokens) );
 });
 
+// Execute command
+setTimeout(function() {
+	console.log("Sending msg!");
+	icecap.command('msg', {
+		'channel':'#webicecap',
+		'network':'ircnet',
+		'mypresence':'icebot',
+		'msg':'Hello world'
+	});
+}, 5000);
+
 /* EOF */
