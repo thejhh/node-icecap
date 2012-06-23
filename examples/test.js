@@ -3,7 +3,7 @@
 
 var icecap = require('../src/icecap.js').create(),
 	util = require('util'),
-	sys = require('sys');
+	util = require('util');
 
 // Write raw data for debug use
 icecap.on('data', function(data) {
@@ -12,7 +12,7 @@ icecap.on('data', function(data) {
 
 // Write parsed data for debug use
 icecap.on('event', function(name, tokens) {
-	util.log('event: ' + sys.inspect(name) + ': ' + sys.inspect(tokens) );
+	util.log('event: ' + util.inspect(name) + ': ' + util.inspect(tokens) );
 });
 
 icecap.on('msg', function(tokens) {
